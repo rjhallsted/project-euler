@@ -14,21 +14,17 @@ def meets_problem_requirements?(a,b,c)
   total == 1000
 end
 
-def test_for_special_triplet(combos)
-  combos.each { |combo|
-    c = calculate_c(combo[0], combo[1])
-    if is_integer?(c) && meets_problem_requirements?(combo[0], combo[1], c)
-      return {a: combo[0], b: combo[1], c: c.to_i}
-    end
-  }
-  return false
+def makes_special_triplet?(a, b)
+  c = calculate_c(a, b)
+  is_integer?(c) && meets_problem_requirements?(a, b, c)
 end
 
 def find_special_triplet
-  range = 1001.times.collect { |i| i }
-  range.shift
-  combos = range.combination(2).to_a
-  test_for_special_triplet(combos)
+  combo = [*1..1000].combination(2).detect { |a, b| makes_special_triplet?(a, b) }
+  unless combo == false
+    return {a: combo[0], b: combo[1], c: calculate_c(combo[0],combo[1]).to_i }
+  end
+  return false
 end
 
 triplet = find_special_triplet
