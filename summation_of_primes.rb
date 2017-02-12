@@ -1,5 +1,4 @@
 #find the sum of all primes under 2 million
-
 #using the AKS primality test: https://en.wikipedia.org/wiki/AKS_primality_test
 
 module Math
@@ -98,7 +97,23 @@ class Integer
         end
       end
       #All the complex polynomial shit goes here. Working on it.
+      loop_max = (Math.sqrt(r.count_coprimes_below) * Math.log2(self)).floor
 
+      puts "-"*15
+
+      poly_zero = Polynomial.new("(x+b)^#{self}")
+      r_poly = Polynomial.new("x^#{r}-1")
+      poly_one = Polynomial.new("x^#{self}+b")
+
+      # func_a = Polys.poly_mod( Polys.poly_rem(poly_zero, r_poly), self)
+      # func_b = Polys.poly_rem(poly_one, r_poly)
+      # for b in 2..loop_max
+      #   func_c = Polys.subtract(func_a, func_b)
+      #   result = func_c.evaluate({b: b})
+      #   if result % self != 0
+      #     return false
+      #   end
+      # end
       return true
     end
     return false
@@ -106,8 +121,13 @@ class Integer
 end
 
 class PolyTerm
-  def initialize(*parts)
-    @parts = clean_parts(parts)
+  def initialize(input)
+    dirty_parts = make_parts(input)
+    # @parts = clean_parts(dirty_parts)
+  end
+
+  def make_parts(input)
+    puts input
   end
 
   def clean_parts(parts)
@@ -143,11 +163,32 @@ end
 class Polynomial
   def initialize(poly_func)
     @readable = strip_whitespace(poly_func)
-
+    @terms = turn_readable_into_terms
   end
 
   def strip_whitespace(func)
-    func.gsub!(/\s+/, "")
+    func.gsub(/\s+/, "")
+  end
+
+  def turn_readable_into_terms
+    puts @readable
+    terms = @readable.split(/([\+\-])(?=[^\)]*(?:\(|$))/) #split by + or -, unless inside of parentheses. Keep the delimeter.
+    cleaned_terms = group_signs_to_terms(terms)
+    cleaned_terms.map! do |term|
+      PolyTerm.new(term)
+    end
+  end
+
+  def group_signs_to_terms(terms)
+    cleaned_terms = Array.new
+    terms.each_with_index do |term, index|
+      if term == "+" || term == "-"
+        term += terms[index+1]
+        terms.delete_at(index+1)
+      end
+      cleaned_terms.push(term)
+    end
+    cleaned_terms
   end
 
   def expand
