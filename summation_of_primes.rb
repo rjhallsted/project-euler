@@ -1,6 +1,9 @@
 #find the sum of all primes under 2 million
 #using the AKS primality test: https://en.wikipedia.org/wiki/AKS_primality_test
 
+###Working on building pascals triangle
+##Add auto-expand for (x+b)^31 style polynomial terms
+
 module Math
   extend self
 
@@ -18,6 +21,21 @@ module Math
         self.gcd([a,b].max - [a,b].min, [a,b].min)
       end
     end
+  end
+
+  def get_pascals_triangle_at_level max_level
+    if max_level <= 2
+      row = max_level.times.collect{|e| 1 }
+    else
+      row = get_pascals_triangle_at_level max_level-1
+      new_row = [1]
+      for level in 2..max_level-1
+        new_row.push(row[level-2] + row[level-1])
+      end
+      new_row.push(1)
+      row = new_row
+    end
+    row
   end
 end
 
@@ -101,7 +119,15 @@ class Integer
 
       puts "-"*15
 
-      poly_zero = Polynomial.new("(x+b)^#{self}")
+      expanded_poly_zero = "x^#{self}"
+      #build pascals triangle to level of self to find coefficients of expanded poly
+      coefficients = Math.get_pascals_triangle_at_level self+1
+      for i in 1..self-1
+        expanded_poly_zero += "+#{coefficients[i]}x^#{i}b^#{self-i}"
+      end
+      expanded_poly_zero += "+b^#{self}"
+
+      poly_zero = Polynomial.new(expanded_poly_zero)
       r_poly = Polynomial.new("x^#{r}-1")
       poly_one = Polynomial.new("x^#{self}+b")
 
@@ -269,3 +295,4 @@ end
 # puts sum_of_primes_under 2.million
 puts 31.prime?
 # puts sum_of_primes_under 10
+# print Math.get_pascals_triangle_at_level 32
