@@ -121,26 +121,77 @@ class Integer
 end
 
 class PolyTerm
-  def initialize(input)
-    dirty_parts = make_parts(input)
-    # @parts = clean_parts(dirty_parts)
+  def initialize input
+    @parts = make_parts input
+    puts @parts
   end
 
-  def make_parts(input)
-    puts input
-  end
-
-  def clean_parts(parts)
-    cleaned_parts = Array.new
-    parts.each { |part|
-      unless part[:variable].nil?
-        part[:variable].gsub!(/\s+/, "")
+  def make_parts input
+    pieces = input.split ""
+    multiplier = 1
+    parts = { coefficient: 1, variable: nil, degree: 1 }
+    index = 0
+    until index >= pieces.count do
+      piece = pieces[index]
+      if piece == "-"
+        multiplier = -1
+      elsif piece == "("
+        inner = piece
+        until pieces[index] == ")" do
+          index += 1
+          inner += pieces[index]
+        end
+        parts[:variable] = inner
+        if pieces[index+1] == "^"
+          matched = false
+          index += 2
+          number = ""
+          until matched || index >= pieces.count
+            if /[\+\-\p{Alpha}]/.match pieces[index]
+              matched = true
+            else
+              number += pieces[index]
+              index += 1
+            end
+          end
+          parts[:degree] = number.to_i
+        end
+      elsif /[a-zA-Z]/.match piece
+        #variable
+        parts[:variable] = piece
+        if pieces[index+1] == "^"
+          matched = false
+          index += 2
+          number = ""
+          until matched || index >= pieces.count
+            if /[\+\-\p{Alpha}]/.match pieces[index]
+              matched = true
+            else
+              number += pieces[index]
+              index += 1
+            end
+          end
+          parts[:degree] = number.to_i
+        end
+      elsif /\d/.match piece
+        #coefficient
+        number = piece
+        matched = false
+        index += 1
+        until matched || index >= pieces.count
+          if /[\+\-\p{Alpha}]/.match pieces[index]
+            matched = true
+          else
+            number += pieces[index]
+            index += 1
+          end
+        end
+        parts[:coefficient] = number.to_i * multiplier
+        multiplier = 1
       end
-      part[:coefficient] ||= 1
-      part[:degree] ||= 1
-      cleaned_parts.push(part)
-    }
-    return cleaned_parts
+      index += 1
+    end
+    parts
   end
 
   def readable
@@ -161,32 +212,32 @@ class PolyTerm
 end
 
 class Polynomial
-  def initialize(poly_func)
-    @readable = strip_whitespace(poly_func)
+  def initialize poly_func
+    @readable = strip_whitespace poly_func
     @terms = turn_readable_into_terms
   end
 
-  def strip_whitespace(func)
+  def strip_whitespace func
     func.gsub(/\s+/, "")
   end
 
   def turn_readable_into_terms
     puts @readable
     terms = @readable.split(/([\+\-])(?=[^\)]*(?:\(|$))/) #split by + or -, unless inside of parentheses. Keep the delimeter.
-    cleaned_terms = group_signs_to_terms(terms)
+    cleaned_terms = group_signs_to_terms terms
     cleaned_terms.map! do |term|
       PolyTerm.new(term)
     end
   end
 
-  def group_signs_to_terms(terms)
+  def group_signs_to_terms terms
     cleaned_terms = Array.new
     terms.each_with_index do |term, index|
       if term == "+" || term == "-"
         term += terms[index+1]
         terms.delete_at(index+1)
       end
-      cleaned_terms.push(term)
+      cleaned_terms.push term
     end
     cleaned_terms
   end
@@ -203,12 +254,10 @@ def sum_of_primes_under number
 
   until current_number >= number
     if current_number.prime?
-      discovered_primes.push(current_number)
+      discovered_primes.push current_number
       # puts current_number
     end
     current_number +=2
-
-    # puts current_number
   end
 
   return discovered_primes.reduce(:+)
