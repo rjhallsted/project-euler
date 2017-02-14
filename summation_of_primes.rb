@@ -1,8 +1,7 @@
 #find the sum of all primes under 2 million
 #using the AKS primality test: https://en.wikipedia.org/wiki/AKS_primality_test
 
-###Working on building pascals triangle
-##Add auto-expand for (x+b)^31 style polynomial terms
+##Polynomial math
 
 module Math
   extend self
@@ -123,7 +122,7 @@ class Integer
       #build pascals triangle to level of self to find coefficients of expanded poly
       coefficients = Math.get_pascals_triangle_at_level self+1
       for i in 1..self-1
-        expanded_poly_zero += "+#{coefficients[i]}x^#{i}b^#{self-i}"
+        expanded_poly_zero += "+#{coefficients[i]}x^#{self-i}b^#{i}"
       end
       expanded_poly_zero += "+b^#{self}"
 
@@ -131,10 +130,10 @@ class Integer
       r_poly = Polynomial.new("x^#{r}-1")
       poly_one = Polynomial.new("x^#{self}+b")
 
-      # func_a = Polys.poly_mod( Polys.poly_rem(poly_zero, r_poly), self)
-      # func_b = Polys.poly_rem(poly_one, r_poly)
+      # func_a = poly_mod( Polys.poly_rem(poly_zero, r_poly), self)
+      # func_b = poly_rem(poly_one, r_poly)
       # for b in 2..loop_max
-      #   func_c = Polys.subtract(func_a, func_b)
+      #   func_c = poly_subtract(func_a, func_b)
       #   result = func_c.evaluate({b: b})
       #   if result % self != 0
       #     return false
@@ -149,42 +148,24 @@ end
 class PolyTerm
   def initialize input
     @parts = make_parts input
-    puts @parts
+
   end
 
   def make_parts input
     pieces = input.split ""
     multiplier = 1
-    parts = { coefficient: 1, variable: nil, degree: 1 }
+    parts = { coefficient: 1, variables: Array.new }
     index = 0
     until index >= pieces.count do
       piece = pieces[index]
       if piece == "-"
         multiplier = -1
-      elsif piece == "("
-        inner = piece
-        until pieces[index] == ")" do
-          index += 1
-          inner += pieces[index]
-        end
-        parts[:variable] = inner
-        if pieces[index+1] == "^"
-          matched = false
-          index += 2
-          number = ""
-          until matched || index >= pieces.count
-            if /[\+\-\p{Alpha}]/.match pieces[index]
-              matched = true
-            else
-              number += pieces[index]
-              index += 1
-            end
-          end
-          parts[:degree] = number.to_i
-        end
+        # puts "#{piece}: minus"
+      elsif piece == '+'
+        multiplier = 1
+        # puts "#{piece}: plus"
       elsif /[a-zA-Z]/.match piece
-        #variable
-        parts[:variable] = piece
+        #variable and degree
         if pieces[index+1] == "^"
           matched = false
           index += 2
@@ -192,12 +173,14 @@ class PolyTerm
           until matched || index >= pieces.count
             if /[\+\-\p{Alpha}]/.match pieces[index]
               matched = true
+              index -= 1
             else
               number += pieces[index]
               index += 1
             end
           end
-          parts[:degree] = number.to_i
+          parts[:variables].push({name: piece, degree: number.to_i})
+          # puts "#{piece}: variable => #{piece}, degree => #{number.to_i}"
         end
       elsif /\d/.match piece
         #coefficient
@@ -207,12 +190,14 @@ class PolyTerm
         until matched || index >= pieces.count
           if /[\+\-\p{Alpha}]/.match pieces[index]
             matched = true
+            index -= 1
           else
-            number += pieces[index]
+            number += pieces[index].to_s
             index += 1
           end
         end
         parts[:coefficient] = number.to_i * multiplier
+        # puts "#{piece}: coefficient"
         multiplier = 1
       end
       index += 1
@@ -221,18 +206,14 @@ class PolyTerm
   end
 
   def readable
-    text = ""
-    @parts.each { |part|
-      if defined? part[:variable]
-        text += "#{part[:coefficient]}#{part[:variable]}^#{part[:degree]},"
-      else
-        text += "#{coefficient} "
-      end
-    }
-    return text[0..-2]
+    text = "#{@parts[:coefficient]}"
+    if defined? @parts[:variables]
+      @parts[:variables].each { |variable| text += "#{variable[:name]}^#{variable[:degree]}"}
+    end
+    text
   end
 
-  def print
+  def print_parts
     puts readable
   end
 end
@@ -251,6 +232,7 @@ class Polynomial
     puts @readable
     terms = @readable.split(/([\+\-])(?=[^\)]*(?:\(|$))/) #split by + or -, unless inside of parentheses. Keep the delimeter.
     cleaned_terms = group_signs_to_terms terms
+    # puts cleaned_terms
     cleaned_terms.map! do |term|
       PolyTerm.new(term)
     end
@@ -268,9 +250,20 @@ class Polynomial
     cleaned_terms
   end
 
-  def expand
+  def evaluate argument
 
   end
+end
+
+def poly_mod(poly_one, poly_two, number)
+
+end
+
+def poly_rem(poly_one, poly_two)
+
+end
+
+def poly_subtract(poly_one, poly_two)
 
 end
 
