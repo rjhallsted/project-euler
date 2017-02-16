@@ -2,6 +2,7 @@
 #using the AKS primality test: https://en.wikipedia.org/wiki/AKS_primality_test
 
 ##Polynomial math
+###explicitly polynomial subtraction
 
 module Math
   extend self
@@ -131,7 +132,7 @@ class Integer
       poly_one = Polynomial.new("x^#{self}+b")
 
       # func_a = poly_mod( Polys.poly_rem(poly_zero, r_poly), self)
-      # func_b = poly_rem(poly_one, r_poly)
+      func_b = poly_rem(poly_one, r_poly)
       # for b in 2..loop_max
       #   func_c = poly_subtract(func_a, func_b)
       #   result = func_c.evaluate({b: b})
@@ -146,6 +147,8 @@ class Integer
 end
 
 class PolyTerm
+  attr_reader :parts
+
   def initialize input
     @parts = make_parts input
 
@@ -216,12 +219,49 @@ class PolyTerm
   def print_parts
     puts readable
   end
+
+  def multiply_by factor
+    coefficient = self.parts[:coefficient] * factor.parts[:coefficient]
+    variables = ""
+    self.parts[:variables].each do |variable|
+      if factor.parts[:variables].any? { |v| v[:name] == variable[:name] }
+        test_against = factor.parts[:variables].select { |v| v[:name] == variable[:name] }
+        test_against = test_against.first
+        if variable[:degree] >= test_against[:degree]
+          resulting = variable[:degree] + test_against[:degree]
+          variables += "#{variable[:name]}^#{resulting}"
+        end
+      end
+    end
+    string = coefficient.to_s + variables
+    PolyTerm.new(string)
+  end
+
+  def divide_by divisor
+    coefficient = self.parts[:coefficient] / divisor.parts[:coefficient]
+    variables = ""
+    self.parts[:variables].each do |variable|
+      if divisor.parts[:variables].any? { |v| v[:name] == variable[:name] }
+        test_against = divisor.parts[:variables].select { |v| v[:name] == variable[:name] }
+        test_against = test_against.first
+        if variable[:degree] >= test_against[:degree]
+          resulting = variable[:degree] - test_against[:degree]
+          variables += "#{variable[:name]}^#{resulting}"
+        end
+      end
+    end
+    string = coefficient.to_s + variables
+    PolyTerm.new(string)
+  end
 end
 
 class Polynomial
+  attr_reader :degree, :terms, :readable
+
   def initialize poly_func
     @readable = strip_whitespace poly_func
     @terms = turn_readable_into_terms
+    @degree = get_function_degree
   end
 
   def strip_whitespace func
@@ -229,7 +269,6 @@ class Polynomial
   end
 
   def turn_readable_into_terms
-    puts @readable
     terms = @readable.split(/([\+\-])(?=[^\)]*(?:\(|$))/) #split by + or -, unless inside of parentheses. Keep the delimeter.
     cleaned_terms = group_signs_to_terms terms
     # puts cleaned_terms
@@ -250,7 +289,27 @@ class Polynomial
     cleaned_terms
   end
 
+  def get_function_degree
+    degrees = Array.new
+    @terms.each do |term|
+      if term.parts.key? :variables
+        values = term.parts[:variables].collect { |v| v[:degree] }
+        values.map! { |x| if x.nil? then return 0 else return x end }
+        degrees.push values.flatten!
+      end
+    end
+    degrees.max
+  end
+
   def evaluate argument
+
+  end
+
+  def minus subtrahend
+
+  end
+
+  def multiply_by factor
 
   end
 end
@@ -259,8 +318,17 @@ def poly_mod(poly_one, poly_two, number)
 
 end
 
-def poly_rem(poly_one, poly_two)
+def poly_rem(dividend, divisor)
+  dividend_first = dividend.terms.first
+  divisor_first = divisor.terms.first
 
+  term = dividend_first.divide_by divisor_first
+  #bookmark
+  dividend = dividend.minus( divisor.multiply_by term )
+  if dividend.degree > divisor.degree
+    remainder = poly_rem(dividend, divisor)
+  end
+  remainder
 end
 
 def poly_subtract(poly_one, poly_two)
@@ -268,7 +336,7 @@ def poly_subtract(poly_one, poly_two)
 end
 
 def sum_of_primes_under number
-  discovered_primes = [1,2]
+  discovered_primes = [2]
   current_number = 3
 
   until current_number >= number
@@ -278,14 +346,17 @@ def sum_of_primes_under number
     end
     current_number +=2
   end
-
-  return discovered_primes.reduce(:+)
+  discovered_primes.reduce(:+)
 end
 
 # term = PolyTerm.new({coefficient: 1, variable: '(x + z)', degree: 3}, {variable: 'a'}, {coefficient: 3})
 # term.print
 
 # puts sum_of_primes_under 2.million
-puts 31.prime?
+# puts 31.prime?
 # puts sum_of_primes_under 10
-# print Math.get_pascals_triangle_at_level 32
+
+poly_one = Polynomial.new("x^2+2x^1-7")
+poly_two = Polynomial.new("1x^1-2")
+remainder = poly_rem(poly_one, poly_two)
+puts remainder
