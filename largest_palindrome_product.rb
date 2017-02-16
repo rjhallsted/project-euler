@@ -1,9 +1,10 @@
 #find the largest palindrome product of two 3-digit numbers
 
+#readable
 def is_palindrome?( number )
   initial = number.to_s
   reversed = number.to_s.reverse!
-  return initial === reversed
+  initial === reversed
 end
 
 palindromes = Array.new
@@ -16,4 +17,16 @@ for factor_one in 900..999
   end
 end
 
+puts palindromes.max
+
+#############################
+#clever
+class Integer
+  def palindrome?
+    self.to_s === self.to_s.reverse!
+  end
+end
+
+products = [*900..999].combination(2).map { |combo| combo.reduce(:*) }
+palindromes = products.select { |n| n.palindrome? }
 puts palindromes.max
