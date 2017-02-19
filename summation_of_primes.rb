@@ -7,23 +7,6 @@ class Integer
   def million
     self * 1000 * 1000
   end
-
-  def prime_divisible? primes_below
-    primes_below.each { |prime|
-      if self % prime == 0
-        return true
-      end
-    }
-    return false
-  end
-
-  def perfect_power?
-    [*2..self].repeated_permutation(2).any? { |combo| combo.first**combo.last == self }
-  end
-
-  def prime?
-
-  end
 end
 
 def sum_of_primes_under number
@@ -31,13 +14,24 @@ def sum_of_primes_under number
   current_number = 3
 
   until current_number >= number
-    if current_number.prime?
+    if is_prime(current_number, discovered_primes)
       discovered_primes.push current_number
-      # puts current_number
+      puts current_number
     end
     current_number +=2
   end
   discovered_primes.reduce(:+)
 end
 
-# puts sum_of_primes_under 2.million
+def is_prime(number, discovered_primes)
+  index = 0
+  until discovered_primes[index] > Math.sqrt(number)
+    if number % discovered_primes[index] == 0
+      return false
+    end
+    index += 1
+  end
+  true
+end
+
+puts sum_of_primes_under 2.million

@@ -9,4 +9,4 @@ puts sum
 
 #clever
 modded = [*1..999].select { |i| i % 3 == 0 || i % 5 == 0 }
-puts modded.inject(0) { |sum,i| sum + i }
+puts modded.to_enum.reduce(:+)
