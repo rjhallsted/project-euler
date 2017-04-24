@@ -1,17 +1,3 @@
-# def sum_amicable_numbers_under number
-#   amicables = Array.new
-#   for a in 1..(number-1)
-#     unless amicables.include? a
-#       b = sum_divisors a
-#       if sum_divisors(b) == a && a != b
-#         amicables.push(a)
-#         amicables.push(b)
-#       end
-#     end
-#   end
-#   amicables.reduce(:+)
-# end
-
 def is_amicable(sums, x)
   unless x == 1
     a = sums[x-1]
