@@ -16,7 +16,7 @@ def sum_of_primes_under number
   until current_number >= number
     if is_prime(current_number, discovered_primes)
       discovered_primes.push current_number
-      puts current_number
+      # puts current_number
     end
     current_number +=2
   end
